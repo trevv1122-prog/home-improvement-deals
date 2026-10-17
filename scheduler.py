@@ -30,8 +30,8 @@ class DealScannerDaemon:
         db: DealDatabase,
         scan_time_str: str = "06:00",
         webhook_url: str = None,
-        hd_store_id: str = "6549",
-        lowes_store_id: str = "2498"
+        hd_store_id: str = "6589",
+        lowes_store_id: str = "2929"
     ):
         self.db = db
         self.scan_time_str = scan_time_str  # "HH:MM" 24hr format

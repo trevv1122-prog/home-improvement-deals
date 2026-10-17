@@ -1,10 +1,14 @@
 {
-  "last_updated": "2026-10-16T03:51:16.216587",
-  "scan_date": "2026-10-16",
-  "total_deals": 32,
-  "new_deals_today": 32,
-  "clearance_count": 11,
-  "price_drops_count": 0,
-  "average_discount_pct": 33.5,
-  "total_potential_savings": 5944.0
+  "scan_date": "2026-10-17",
+  "counties": [
+    "Collin",
+    "Dallas"
+  ],
+  "total_stores_tracked": 24,
+  "total_deals_tracked": 276,
+  "collin_deals": 138,
+  "dallas_deals": 138,
+  "clearance_count": 108,
+  "average_discount_pct": 35.0,
+  "total_potential_savings": 53784.0
 }
