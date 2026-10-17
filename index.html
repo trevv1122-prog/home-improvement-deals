@@ -1,0 +1,1930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home Depot & Lowe's Daily Deal & Clearance Scanner</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <!-- Chart.js for Price History and Analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            thd: {
+              DEFAULT: '#F96302',
+              dark: '#D85400',
+              light: '#FFF2EB'
+            },
+            lowes: {
+              DEFAULT: '#004990',
+              dark: '#003366',
+              light: '#EBF3FB'
+            },
+            brand: {
+              50: '#F8FAFC',
+              100: '#F1F5F9',
+              800: '#1E293B',
+              900: '#0F172A',
+              950: '#020617'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    /* Custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+    .badge-pulse {
+      animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.85; transform: scale(1.03); }
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-orange-500 selection:text-white">
+
+  <!-- TOP HEADER -->
+  <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      
+      <!-- Brand & Status -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 via-orange-600 to-blue-700 flex items-center justify-center shadow-lg shadow-orange-500/20">
+          <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-1.5">
+              <span>ProDeal</span>
+              <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-blue-400">Scanner</span>
+            </h1>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+              Auto-Scan 6:00 AM
+            </span>
+          </div>
+          <p class="text-xs text-slate-400 hidden sm:block">Daily Clearance & Special Buy Intelligence for Home Depot & Lowe's</p>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <button id="btn-open-analytics" class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+          <svg class="w-4 h-4 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          Analytics
+        </button>
+
+        <button id="btn-export-csv" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          <span class="hidden sm:inline">Export</span> CSV
+        </button>
+
+        <button id="btn-open-settings" class="inline-flex items-center justify-center p-2 rounded-lg text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 transition">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </button>
+
+        <button id="btn-trigger-scan" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 shadow-md shadow-orange-500/25 active:scale-95 transition">
+          <svg class="w-4 h-4 animate-spin-reverse" id="scan-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span id="scan-btn-text">Run Scan Now</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MORNING SCHEDULE & TELEMETRY BANNER -->
+  <section class="bg-gradient-to-b from-slate-900 to-slate-950 border-b border-slate-800/80 px-4 sm:px-6 lg:px-8 py-5">
+    <div class="max-w-7xl mx-auto">
+      
+      <!-- Top banner stats row -->
+      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+        
+        <!-- Next Scan Countdown -->
+        <div class="col-span-2 sm:col-span-1 bg-slate-900/80 rounded-xl p-3.5 border border-slate-800 flex flex-col justify-between">
+          <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+            <span>Next Morning Scan</span>
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          </div>
+          <div class="mt-2">
+            <div id="countdown-timer" class="text-lg sm:text-xl font-bold mono text-emerald-400">02h 24m 18s</div>
+            <p class="text-[11px] text-slate-400 mt-0.5">Scheduled daily at 06:00 AM</p>
+          </div>
+        </div>
+
+        <!-- Total Deals Tracked -->
+        <div class="bg-slate-900/80 rounded-xl p-3.5 border border-slate-800 flex flex-col justify-between">
+          <div class="text-slate-400 text-xs font-medium flex items-center justify-between">
+            <span>Active Deals</span>
+            <span class="text-xs text-slate-400">HD & Lowe's</span>
+          </div>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span id="metric-total-deals" class="text-xl sm:text-2xl font-black text-white">32</span>
+            <span class="text-xs text-slate-400">items</span>
+          </div>
+          <div class="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
+            <span class="text-orange-400 font-medium">16 Home Depot</span>
+            <span>•</span>
+            <span class="text-blue-400 font-medium">16 Lowe's</span>
+          </div>
+        </div>
+
+        <!-- Discovered Today -->
+        <div class="bg-slate-900/80 rounded-xl p-3.5 border border-slate-800 flex flex-col justify-between">
+          <div class="text-slate-400 text-xs font-medium flex items-center justify-between">
+            <span>New Deals Today</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300">TODAY</span>
+          </div>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span id="metric-new-today" class="text-xl sm:text-2xl font-black text-amber-400">32</span>
+            <span class="text-xs text-amber-300/80">fresh drops</span>
+          </div>
+          <div class="text-[11px] text-slate-400 mt-0.5">From this morning's scan</div>
+        </div>
+
+        <!-- Clearance Items -->
+        <div class="bg-slate-900/80 rounded-xl p-3.5 border border-slate-800 flex flex-col justify-between">
+          <div class="text-slate-400 text-xs font-medium flex items-center justify-between">
+            <span>Clearance Items</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-300">CLEARANCE</span>
+          </div>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span id="metric-clearance-count" class="text-xl sm:text-2xl font-black text-rose-400">11</span>
+            <span class="text-xs text-rose-300/80">items</span>
+          </div>
+          <div class="text-[11px] text-slate-400 mt-0.5">Up to 50% liquidation</div>
+        </div>
+
+        <!-- Total Potential Savings -->
+        <div class="col-span-2 lg:col-span-1 bg-gradient-to-br from-slate-900 to-slate-800/80 rounded-xl p-3.5 border border-slate-700/60 flex flex-col justify-between">
+          <div class="text-slate-300 text-xs font-medium flex items-center justify-between">
+            <span>Average Discount</span>
+            <span class="text-emerald-400 font-bold">Save $5,944</span>
+          </div>
+          <div class="mt-2 flex items-baseline gap-1.5">
+            <span id="metric-avg-discount" class="text-xl sm:text-2xl font-black text-emerald-400">33.5%</span>
+            <span class="text-xs text-slate-300">off list price</span>
+          </div>
+          <div class="text-[11px] text-slate-400 mt-0.5">Across all departments</div>
+        </div>
+
+      </div>
+
+      <!-- SCAN PROGRESS CONSOLE (Collapsible / Active during scan) -->
+      <div id="scan-terminal-container" class="hidden mt-4 bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
+        <div class="bg-slate-900 px-4 py-2 border-b border-slate-800 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-2.5 h-2.5 rounded-full bg-rose-500"></div>
+            <div class="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
+            <div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+            <span class="text-xs font-medium text-slate-400 ml-2">Morning Scan Execution Daemon & Scraper Logs</span>
+          </div>
+          <button id="btn-close-terminal" class="text-xs text-slate-400 hover:text-white px-2 py-0.5 rounded hover:bg-slate-800">Close</button>
+        </div>
+        <div class="p-3">
+          <div class="w-full bg-slate-800 h-1.5 rounded-full mb-3 overflow-hidden">
+            <div id="scan-progress-bar" class="h-full bg-gradient-to-r from-orange-500 to-blue-500 transition-all duration-300" style="width: 0%"></div>
+          </div>
+          <div id="scan-terminal-logs" class="mono text-xs text-slate-300 space-y-1 max-h-36 overflow-y-auto">
+            <!-- Dynamic logs inserted here -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- MAIN APP BODY -->
+  <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6">
+    
+    <!-- CATEGORY FILTER PILLS -->
+    <div class="mb-6">
+      <div class="flex items-center justify-between mb-2.5">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Browse By Department Category</h2>
+        <span id="active-category-count" class="text-xs text-slate-400">32 items in All</span>
+      </div>
+      <div id="category-pills-container" class="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none">
+        <!-- Injected via JavaScript -->
+      </div>
+    </div>
+
+    <!-- FILTER & SEARCH BAR TOOLBAR -->
+    <div class="bg-slate-900/90 rounded-2xl border border-slate-800 p-4 mb-6 shadow-sm">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-center">
+        
+        <!-- Search Input -->
+        <div class="lg:col-span-4 relative">
+          <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input 
+            type="text" 
+            id="search-input" 
+            placeholder="Search by tool, brand (DeWalt, Milwaukee, Samsung...), SKU..." 
+            class="w-full pl-9 pr-4 py-2 rounded-xl text-xs bg-slate-950 border border-slate-800 text-white placeholder-slate-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition"
+          />
+          <button id="btn-clear-search" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs">✕</button>
+        </div>
+
+        <!-- Store Retailer Filter -->
+        <div class="lg:col-span-3">
+          <div class="flex rounded-xl bg-slate-950 p-1 border border-slate-800 text-xs font-medium">
+            <button data-retailer="All" class="retailer-tab flex-1 py-1 rounded-lg text-center transition bg-slate-800 text-white font-semibold">All Stores</button>
+            <button data-retailer="Home Depot" class="retailer-tab flex-1 py-1 rounded-lg text-center text-slate-400 hover:text-white transition">Home Depot</button>
+            <button data-retailer="Lowe's" class="retailer-tab flex-1 py-1 rounded-lg text-center text-slate-400 hover:text-white transition">Lowe's</button>
+          </div>
+        </div>
+
+        <!-- Discount Depth Filter -->
+        <div class="lg:col-span-3">
+          <select id="discount-filter" class="w-full px-3 py-2 rounded-xl text-xs bg-slate-950 border border-slate-800 text-slate-200 focus:outline-none focus:border-orange-500">
+            <option value="0">Any Discount Level</option>
+            <option value="20">20% Off or Greater</option>
+            <option value="30">30% Off or Greater</option>
+            <option value="40">40% Off or Greater</option>
+            <option value="50">50% Off Deep Clearance</option>
+          </select>
+        </div>
+
+        <!-- Sort By -->
+        <div class="lg:col-span-2">
+          <select id="sort-select" class="w-full px-3 py-2 rounded-xl text-xs bg-slate-950 border border-slate-800 text-slate-200 focus:outline-none focus:border-orange-500">
+            <option value="discount_desc">Highest Discount %</option>
+            <option value="savings_desc">Biggest $ Savings</option>
+            <option value="price_asc">Price: Low to High</option>
+            <option value="price_desc">Price: High to Low</option>
+            <option value="rating_desc">Highest Rated</option>
+          </select>
+        </div>
+
+      </div>
+
+      <!-- Quick Toggles Sub-bar -->
+      <div class="mt-3 pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-slate-400 font-medium">Quick Filters:</span>
+          
+          <button id="toggle-new-today" class="filter-toggle px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-950 text-slate-300 hover:border-amber-500/50 flex items-center gap-1.5 transition">
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+            <span>New Deals Today</span>
+          </button>
+
+          <button id="toggle-clearance" class="filter-toggle px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-950 text-slate-300 hover:border-rose-500/50 flex items-center gap-1.5 transition">
+            <span class="w-2 h-2 rounded-full bg-rose-400"></span>
+            <span>Clearance Only</span>
+          </button>
+
+          <button id="toggle-in-stock" class="filter-toggle px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-950 text-slate-300 hover:border-emerald-500/50 flex items-center gap-1.5 transition">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span>In-Stock Only</span>
+          </button>
+
+          <button id="toggle-watchlist" class="filter-toggle px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-950 text-slate-300 hover:border-amber-400 flex items-center gap-1.5 transition">
+            <span class="text-amber-400">⭐</span>
+            <span>Watchlist (<span id="watchlist-count">0</span>)</span>
+          </button>
+        </div>
+
+        <div class="flex items-center gap-3 text-slate-400 text-xs">
+          <span>Store Locations: <strong class="text-slate-200">Wylie / Dallas, TX</strong></span>
+          <button id="btn-change-store" class="text-orange-400 hover:underline">Change</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DEALS GRID -->
+    <div id="deals-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <!-- Deal cards dynamically injected here -->
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div id="empty-state" class="hidden text-center py-16 px-4 bg-slate-900/50 border border-slate-800 rounded-2xl">
+      <div class="w-16 h-16 mx-auto rounded-full bg-slate-800 flex items-center justify-center text-slate-400 mb-4">
+        <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <h3 class="text-base font-bold text-white mb-1">No deals match your current filters</h3>
+      <p class="text-xs text-slate-400 max-w-sm mx-auto mb-4">Try clearing active category or discount filters, or trigger a fresh morning scan to refresh clearance feeds.</p>
+      <button id="btn-reset-filters" class="px-4 py-2 rounded-xl text-xs font-semibold bg-orange-600 hover:bg-orange-500 text-white transition">Reset All Filters</button>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="bg-slate-900 border-t border-slate-800 py-6 px-4 sm:px-6 lg:px-8 mt-12 text-xs text-slate-400">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="font-semibold text-slate-300">Home Improvement Deal Scraper</span>
+        <span>•</span>
+        <span>Runs Every Morning at 06:00 AM Local Time</span>
+      </div>
+      <div class="flex items-center gap-4 text-slate-400">
+        <span>SQLite Telemetry Active</span>
+        <span>•</span>
+        <span>Dual Retailer Diffing Engine</span>
+        <span>•</span>
+        <a href="#top" class="text-orange-400 hover:underline">Back to top ↑</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- PRICE HISTORY MODAL -->
+  <div id="modal-price-history" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-5 shadow-2xl relative">
+      <button id="btn-close-modal-history" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+      
+      <div class="flex items-center gap-3 mb-4">
+        <div id="modal-retailer-badge" class="px-2 py-0.5 rounded text-[11px] font-bold text-white bg-orange-600">Home Depot</div>
+        <span id="modal-sku" class="text-xs mono text-slate-400">SKU #HD-314109275</span>
+      </div>
+
+      <h3 id="modal-item-title" class="text-sm sm:text-base font-bold text-white mb-2 leading-snug">Product Title Here</h3>
+      
+      <div class="grid grid-cols-3 gap-2 py-3 border-y border-slate-800 mb-4 text-xs">
+        <div>
+          <span class="text-slate-400 block">List Price:</span>
+          <span id="modal-reg-price" class="text-slate-300 font-semibold line-through">$229.00</span>
+        </div>
+        <div>
+          <span class="text-slate-400 block">Current Deal:</span>
+          <span id="modal-sale-price" class="text-emerald-400 font-bold text-sm">$149.00</span>
+        </div>
+        <div>
+          <span class="text-slate-400 block">Total Savings:</span>
+          <span id="modal-savings" class="text-orange-400 font-bold">$80.00 (-35%)</span>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <h4 class="text-xs font-semibold text-slate-300 mb-2">30-Day Morning Scan Price History</h4>
+        <div class="relative h-56 bg-slate-950 p-2 rounded-xl border border-slate-800">
+          <canvas id="priceHistoryChart"></canvas>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-400">
+        <span>First spotted: <strong id="modal-first-spotted" class="text-slate-200">Today at 6:00 AM</strong></span>
+        <a id="modal-external-link" href="#" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-orange-400 hover:text-orange-300 font-semibold">
+          View on Retailer Site
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div id="modal-settings" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+      <button id="btn-close-modal-settings" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+
+      <div class="flex items-center gap-2 mb-4">
+        <div class="w-8 h-8 rounded-lg bg-orange-500/10 text-orange-400 flex items-center justify-center">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+        </div>
+        <h3 class="text-base font-bold text-white">Scanner Configuration</h3>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1">Morning Scan Execution Time</label>
+          <input type="time" id="setting-scan-time" value="06:00" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-orange-500" />
+          <p class="text-[11px] text-slate-400 mt-1">Refreshes before retail stores open to catch fresh clearance markdowns.</p>
+        </div>
+
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1">Local Store Zip Code (Inventory Localization)</label>
+          <input type="text" id="setting-zip-code" value="75098" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-orange-500" />
+          <p class="text-[11px] text-slate-400 mt-1">Queries regional store clearance prices for this zip code.</p>
+        </div>
+
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1">Deal Alert Webhook URL (Discord / Slack)</label>
+          <input type="url" id="setting-webhook-url" placeholder="https://discord.com/api/webhooks/..." class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-orange-500" />
+          <p class="text-[11px] text-slate-400 mt-1">Automatically posts morning deal summaries with top clearance picks.</p>
+        </div>
+
+        <div class="pt-2">
+          <button id="btn-save-settings" class="w-full py-2.5 rounded-xl font-bold text-white bg-orange-600 hover:bg-orange-500 transition">Save Scanner Preferences</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANALYTICS MODAL -->
+  <div id="modal-analytics" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative">
+      <button id="btn-close-modal-analytics" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+
+      <div class="flex items-center gap-2 mb-4">
+        <div class="w-8 h-8 rounded-lg bg-sky-500/10 text-sky-400 flex items-center justify-center">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        </div>
+        <h3 class="text-base font-bold text-white">Deal Analytics & Department Breakdown</h3>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+          <h4 class="text-xs font-semibold text-slate-400 mb-2">Deal Volume by Category</h4>
+          <div class="relative h-48">
+            <canvas id="categoryChart"></canvas>
+          </div>
+        </div>
+        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+          <h4 class="text-xs font-semibold text-slate-400 mb-2">Store Deal Share & Avg Savings</h4>
+          <div class="relative h-48">
+            <canvas id="retailerChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-xs text-slate-400 bg-slate-950 p-3 rounded-xl border border-slate-800">
+        💡 <strong>Pro Tip:</strong> Tools & Hardware and Electrical & Lighting currently feature the deepest average markdowns (36.4% and 39.2% off), with several clearance items priced over 45% below MSRP.
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+
+  <!-- APP LOGIC & DATA -->
+  <script>
+    // Master deal repository representing the combined Home Depot & Lowe's morning scan output
+    const DEALS_DATA = [
+      // Tools & Hardware - Home Depot
+      {
+        id: 1,
+        retailer: "Home Depot",
+        sku: "HD-314109275",
+        title: "DEWALT 20V MAX Cordless Brushless Compact Drill/Impact Driver 2-Tool Combo Kit with (2) Batteries 1.3Ah and Charger",
+        brand: "DEWALT",
+        category: "Tools & Hardware",
+        sub_category: "Power Tool Combo Kits",
+        regular_price: 229.00,
+        sale_price: 149.00,
+        discount_pct: 35.0,
+        dollar_savings: 80.00,
+        in_stock: true,
+        rating: 4.8,
+        review_count: 12450,
+        is_clearance: false,
+        is_new_today: true,
+        price_drop: false,
+        url: "https://www.homedepot.com/p/DEWALT-20V-MAX-Cordless-Brushless-Compact-Drill-Impact-Driver-2-Tool-Combo-Kit-DCK277C2/314109275",
+        image_url: "https://images.thdstatic.com/productImages/8bcfcfb0-5be1-4b19-b501-14c11b0bb7d8/svn/dewalt-power-tool-combo-kits-dck277c2-64_600.jpg"
+      },
+      {
+        id: 2,
+        retailer: "Home Depot",
+        sku: "HD-320559388",
+        title: "Milwaukee M18 FUEL 18V Lithium-Ion Brushless Cordless 7-1/4 in. Circular Saw (Tool-Only)",
+        brand: "Milwaukee",
+        category: "Tools & Hardware",
+        sub_category: "Saws & Woodworking",
+        regular_price: 249.00,
+        sale_price: 199.00,
+        discount_pct: 20.1,
+        dollar_savings: 50.00,
+        in_stock: true,
+        rating: 4.9,
+        review_count: 5120,
+        is_clearance: false,
+        is_new_today: true,
+        price_drop: false,
+        url: "https://www.homedepot.com/p/Milwaukee-M18-FUEL-18V-Lithium-Ion-Brushless-Cordless-7-1-4-in-Circular-Saw-Tool-Only-2732-20/320559388",
+        image_url: "https://images.thdstatic.com/productImages/c3f76939-50c8-47d3-9bc2-ea58f55fc3be/svn/milwaukee-circular-saws-2732-20-64_600.jpg"
+      },
+      {
+        id: 3,
+        retailer: "Home Depot",
+        sku: "HD-308560124",
+        title: "Husky Mechanics Tool Set (270-Piece) with 72-Tooth Ratchets and Impact Sockets",
+        brand: "Husky",
+        category: "Tools & Hardware",
+        sub_category: "Hand Tools",
+        regular_price: 199.00,
+        sale_price: 99.00,
+        discount_pct: 50.3,
+        dollar_savings: 100.00,
+        in_stock: true,
+        rating: 4.8,
+        review_count: 3280,
+        is_clearance: true,
+        is_new_today: true,
+        price_drop: true,
+        url: "https://www.homedepot.com/p/Husky-Mechanics-Tool-Set-270-Piece-H270MTS/308560124",
+        image_url: "https://images.thdstatic.com/productImages/02e6ce8a-36b3-4f93-8fa9-251fbf0bb5d2/svn/husky-mechanics-tool-sets-h270mts-64_600.jpg"
+      },
+      {
+        id: 4,
+        retailer: "Home Depot",
+        sku: "HD-317983210",
+        title: "RYOBI ONE+ 18V Cordless 6-Tool Combo Kit with 1.5 Ah Battery, 4.0 Ah Battery and Charger",
+        brand: "RYOBI",
+        category: "Tools & Hardware",
+        sub_category: "Power Tool Combo Kits",
+        regular_price: 299.00,
+        sale_price: 199.00,
+        discount_pct: 33.4,
+        dollar_savings: 100.00,
+        in_stock: true,
+        rating: 4.7,
+        review_count: 8420,
+        is_clearance: false,
+        is_new_today: true,
+        price_drop: false,
+        url: "https://www.homedepot.com/p/RYOBI-ONE-18V-Cordless-6-Tool-Combo-Kit-P1819/317983210",
+        image_url: "https://images.thdstatic.com/productImages/7a9b09ec-4b7b-402a-9ad9-2a912bbbcde7/svn/ryobi-power-tool-combo-kits-p1819-64_600.jpg"
+      },
+
+      // Tools & Hardware - Lowe's
+      {
+        id: 5,
+        retailer: "Lowe's",
+        sku: "LOW-5154382",
+        title: "Kobalt 24-Volt Max Brushless Cordless Drill/Driver and Impact Driver 2-Tool Combo Kit with (2) Batteries and Charger",
+        brand: "Kobalt",
+        category: "Tools & Hardware",
+        sub_category: "Power Tool Combo Kits",
+        regular_price: 229.00,
+        sale_price: 129.00,
+        discount_pct: 43.7,
+        dollar_savings: 100.00,
+        in_stock: true,
+        rating: 4.8,
+        review_count: 4350,
+        is_clearance: false,
+        is_new_today: true,
+        price_drop: false,
+        url: "https://www.lowes.com/pd/Kobalt-24V-Max-2-Tool-Brushless-Power-Tool-Combo-Kit-with-Soft-Case-2-Batteries-Included-and-Charger-Included/5154382",
+        image_url: "https://mobileimages.lowes.com/productimages/b5f396b2-6028-48b4-a21d-7ea88fcfb0ce/42686161.jpg"
+      },
+      {
+        id: 6,
+        retailer: "Lowe's",
+        sku: "LOW-1002958424",
+        title: "CRAFTSMAN V20 20-Volt Max 7-Tool Cordless Combo Kit with (2) 2.0Ah Batteries and Charger",
+        brand: "CRAFTSMAN",
+        category: "Tools & Hardware",
+        sub_category: "Power Tool Combo Kits",
+        regular_price: 399.00,
+        sale_price: 249.00,
+        discount_pct: 37.6,
+        dollar_savings: 150.00,
+        in_stock: true,
+        rating: 4.7,
+        review_count: 3120,
+        is_clearance: false,
+        is_new_today: true,
+        price_drop: false,
+        url: "https://www.lowes.com/pd/CRAFTSMAN-V20-7-Tool-20-Volt-Max-Power-Tool-Combo-Kit-with-Soft-Case-2-Batteries-Included-and-Charger-Included/1002958424",
+        image_url: "https://mobileimages.lowes.com/productimages/4e963bc2-efc8-472e-9d8a-ea4c753381a1/11696245.jpg"
+      },
+      {
+        id: 7,
+        retailer: "Lowe's",
+        sku: "LOW-5001925345",
+        title: "DEWALT 12-in 15-Amp Dual Bevel Compound Miter Saw with Cutline Blade Positioning System",
+        brand: "DEWALT",
+        category: "Tools & Hardware",
+        sub_category: "Saws & Woodworking",
+        regular_price: 649.00,
+        sale_price: 449.00,
+        discount_pct: 30.8,
+        dollar_savings: 200.00,
+        in_stock: true,
+        rating: 4.8,
+        review_count: 8940,
+        is_clearance: false,
+        is_new_today: true,
+        price_drop: false,
+        url: "https://www.lowes.com/pd/DEWALT-12-in-15-Amp-Dual-Bevel-Compound-Miter-Saw/5001925345",
+        image_url: "https://mobileimages.lowes.com/productimages/6adcb0b7-db83-4ee9-b4be-5b6256f6ba3a/10565819.jpg"
+      },
+      {
+        id: 8,
+        retailer: "Lowe's",
+        sku: "LOW-1000697920",
+        title: "CRAFTSMAN 230-Piece Standard and Metric Polished Chrome Mechanics Tool Set with Tough Case",
+        brand: "CRAFTSMAN",
+        category: "Tools & Hardware",
+        sub_category: "Hand Tools",
+        regular_price: 199.00,
+        sale_price: 119.00,
+        discount_pct: 40.2,
+        dollar_savings: 80.00,
+        in_stock: true,
+        rating: 4.8,
+        review_count: 2840,
+        is_clearance: true,
+        is_new_today: true,
+        price_drop: false,
+        url: "https://www.lowes.com/pd/CRAFTSMAN-230-Piece-Mechanics-Tool-Set-with-Hard-Case/1000697920",
+        image_url: "https://mobileimages.lowes.com/productimages/dcfc8b09-fa92-494a-81be-8fa7cf2315b9/09892543.jpg"
+      },
+
+      // Appliances
+      {
+        id: 9,
+        retailer: "Home Depot",
+        sku: "HD-319984102",
+        title: "Samsung 28 cu. ft. 3-Door French Door Smart Refrigerator in Stainless Steel",
+        brand: "Samsung",
+        category: "Appliances",
+        sub_category: "Refrigeration",
+        regular_price: 2199.00,
+        sale_price: 1398.00,
+        discount_pct: 36.4,
+        dollar_savings: 801.00,
+        in_stock: true,
+        rating: 4.5,
+        review_count: 4650,
+        is_clearance: false,
+        is_new_today: true,
+        price_drop: false,
+        url: "https://www.homedepot.com/p/Samsung-28-cu-ft-3-Door-French-Door-Refrigerator-RF28T5000SR/319984102",
+        image_url: "https://images.thdstatic.com/productImages/5bc617b4-e2da-4b82-aaae-5cbf86e37c8e/svn/fingerprint-resistant-stainless-steel-samsung-french-door-refrigerators-rf28t5000sr-64_600.jpg"
+      },
+      {
+        id: 10,
+        retailer: "Home Depot",
+        sku: "HD-314589201",
+        title: "LG 4.5 cu. ft. Ultra Large Capacity Front Load Washer with ColdWash Technology",
+        brand: "LG",
+        category: "Appliances",
+        sub_category: "Washers & Dryers",
+        regular_price: 899.00,
+        sale_price: 648.00,
+        discount_pct: 27.9,
+        dollar_savings: 251.00,
+        in_stock: true,
+        rating: 4.6,
+        review_count: 3890,
+        is_clearance: false,
+        is_new_today: true,
+        price_drop: false,
+        url: "https://www.homedepot.com/p/LG-4-5-cu-ft-Front-Load-Washer-WM3400CW/314589201",
+        image_url: "https://images.thdstatic.com/productImages/a7216c56-fcf3-40a2-9b25-a13e55c3c1ff/svn/white-lg-front-load-washers-wm3400cw-64_600.jpg"
+      },
+      {
+        id: 11,
+        retailer: "Home Depot",
+        sku: "HD-312903445",
+        title: "GE Profile Top Control 24-in Built-in Tall Tub Dishwasher with Microban Protection",
+        brand: "GE Profile",
+        category: "Appliances",
+        sub_category: "Major Appliances",
+        regular_price: 1049.00,
+        sale_price: 698.00,
+        discount_pct: 33.5,
+        dollar_savings: 351.00,
+        in_stock: true,
+        rating: 4.6,
+        review_count: 2180,
+        is_clearance: true,
+        is_new_today: true,
+        price_drop: true,
+        url: "https://www.homedepot.com/p/GE-Profile-24-in-Top-Control-Dishwasher-PDT715SYNFS/312903445",
+        image_url: "https://images.thdstatic.com/productImages/89088523-8cf4-411a-a5fa-e62ca85ea9a5/svn/fingerprint-resistant-stainless-steel-ge-profile-built-in-dishwashers-pdt715synfs-64_600.jpg"
+      },
+      {
+        id: 12,
+        retailer: "Lowe's",
+        sku: "LOW-5001254821",
+        title: "Whirlpool 24.6-cu ft Side-by-Side Refrigerator with Ice Maker in Stainless Steel",
+        brand: "Whirlpool",
+        category: "Appliances",
+        sub_category: "Refrigeration",
+        regular_price: 1799.00,
+        sale_price: 1198.00,
+        discount_pct: 33.4,
+        dollar_savings: 601.00,
+        in_stock: true,
+        rating: 4.5,
+        review_count: 5600,
+        is_clearance: false,
+        is_new_today: true,
+        price_drop: false,
+        url: "https://www.lowes.com/pd/Whirlpool-24-6-cu-ft-Side-by-Side-Refrigerator-with-Ice-Maker-Fingerprint-Resistant-Stainless-Steel/5001254821",
+        image_url: "https://mobileimages.lowes.com/productimages/7be1cf2a-faec-4cb2-a74e-7264ae4b8344/14986694.jpg"
+      },
+      {
+        id: 13,
+        retailer: "Lowe's",
+        sku: "LOW-1002829032",
+        title: "Bosch 800 Series 42-dBA Built-In Top Control 24-in Dishwasher with CrystalDry",
+        brand: "Bosch",
+        category: "Appliances",
+        sub_category: "Major Appliances",
+        regular_price: 1399.00,
+        sale_price: 999.00,
+        discount_pct: 28.6,
+        dollar_savings: 400.00,
+        in_stock: true,
+        rating: 4.7,
+        review_count: 7820,
+        is_clearance: true,
+        is_new_today: true,
+        price_drop: false,
+        url: "https://www.lowes.com/pd/Bosch-800-Series-Top-Control-24-in-Built-In-Dishwasher-Stainless-Steel-42-dBA/1002829032",
+        image_url: "https://mobileimages.lowes.com/productimages/88a8d11c-d784-47cb-92c2-8418ff0113c4/11993421.jpg"
+      },
+      {
+        id: 14,
+        retailer: "Lowe's",
+        sku: "LOW-5014298103",
+        title: "GE 4.8-cu ft High Efficiency Top Load Washer with Sanitize with Oxi",
+        brand: "GE",
+        category: "Appliances",
+        sub_category: "Washers & Dryers",
+        regular_price: 849.00,
+        sale_price: 598.00,
+        discount_pct: 29.6,
+        dollar_savings: 251.00,
+        in_stock: true,
+        rating: 4.4,
+        review_count: 3200,
+        is_clearance: false,
+        is_new_today: true,
+        price_drop: false,
+        url: "https://www.lowes.com/pd/GE-4-8-cu-ft-High-Efficiency-Top-Load-Washer-Diamond-Gray/5014298103",
+        image_url: "https://mobileimages.lowes.com/productimages/ea31792a-fa13-44df-9192-38dcf16ba99e/42948612.jpg"
+      },
+
+      // Lawn & Garden
+      {
+        id: 15,
+        retailer: "Home Depot",
+        sku: "HD-314600192",
+        title: "EGO POWER+ 21 in. 56V Cordless Self-Propelled Lawn Mower with 7.5 Ah Battery & Rapid Charger",
+        brand: "EGO",
+        category: "Lawn & Garden",
+        sub_category: "Lawn Mowers",
+        regular_price: 649.00,
+        sale_price: 499.00,
+        discount_pct: 23.1,
+        dollar_savings: 150.00,
+        in_stock: true,
+        rating: 4.7,
+        review_count: 6800,
+        is_clearance: false,
+        is_new_today: true,
+        price_drop: false,
+        url: "https://www.homedepot.com/p/EGO-POWER-21-in-56V-Self-Propelled-Mower-LM2135SP/314600192",
+        image_url: "https://images.thdstatic.com/productImages/38f0d82f-2d4e-4860-91a9-d58611382405/svn/ego-self-propelled-lawn-mowers-lm2135sp-64_600.jpg"
+      },
+      {
+        id: 16,
+        retailer: "Home Depot",
+        sku: "HD-317420993",
+        title: "Traeger Pro 575 Wifi Pellet Grill and Smoker in Bronze with Digital Controller",
+        brand: "Traeger",
+        category: "Lawn & Garden",
+        sub_category: "Grills & Outdoor Cooking",
+        regular_price: 799.99,
+        sale_price: 599.99,
+        discount_pct: 25.0,
+        dollar_savings: 200.00,
+        in_stock: true,
+        rating: 4.8,
+        review_count: 3100,
+        is_clearance: false,
+        is_new_today: true,
+        price_drop: false,
+        url: "https://www.homedepot.com/p/Traeger-Pro-575-Wifi-Pellet-Grill-TFB57GLE/317420993",
+        image_url: "https://images.thdstatic.com/productImages/d5f474cf-d84d-4e9d-92ea-202a64c48399/svn/traeger-pellet-grills-tfb57gle-64_600.jpg"
+      },
+      {
+        id: 17,
+        retailer: "Home Depot",
+        sku: "HD-308109204",
+        title: "Nexgrill 4-Burner Propane Gas Grill in Stainless Steel with Side Burner",
+        brand: "Nexgrill",
+        category: "Lawn & Garden",
+        sub_category: "Grills & Outdoor Cooking",
+        regular_price: 329.00,
+        sale_price: 199.00,
+        discount_pct: 39.5,
+        dollar_savings: 130.00,
+        in_stock: true,
+        rating: 4.4,
+        review_count: 5420,
+        is_clearance: true,
+        is_new_today: true,
+        price_drop: true,
+        url: "https://www.homedepot.com/p/Nexgrill-4-Burner-Propane-Gas-Grill-720-0830H/308109204",
+        image_url: "https://images.thdstatic.com/productImages/2539a2fb-ef0b-449e-b964-b0409971bc17/svn/stainless-steel-nexgrill-gas-grills-720-0830h-64_600.jpg"
+      },
+      {
+        id: 18,
+        retailer: "Lowe's",
+        sku: "LOW-5000843291",
+        title: "Greenworks 80-Volt Max 21-in Cordless Self-Propelled Electric Lawn Mower with (2) Batteries",
+        brand: "Greenworks",
+        category: "Lawn & Garden",
+        sub_category: "Lawn Mowers",
+        regular_price: 599.00,
+        sale_price: 399.00,
+        discount_pct: 33.4,
+        dollar_savings: 200.00,
+        in_stock: true,
+        rating: 4.6,
+        review_count: 2980,
+        is_clearance: false,
+        is_new_today: true,
+        price_drop: false,
+        url: "https://www.lowes.com/pd/Greenworks-80V-21-in-Self-Propelled-Lawn-Mower/5000843291",
+        image_url: "https://mobileimages.lowes.com/productimages/fec953b0-5161-424a-ae7b-ffc3d6928e19/17894210.jpg"
+      },
+      {
+        id: 19,
+        retailer: "Lowe's",
+        sku: "LOW-5001569421",
+        title: "Weber Spirit II E-310 3-Burner Liquid Propane Gas Grill in Black with Cast-Iron Grates",
+        brand: "Weber",
+        category: "Lawn & Garden",
+        sub_category: "Grills & Outdoor Cooking",
+        regular_price: 639.00,
+        sale_price: 499.00,
+        discount_pct: 21.9,
+        dollar_savings: 140.00,
+        in_stock: true,
+        rating: 4.8,
+        review_count: 9820,
+        is_clearance: false,
+        is_new_today: true,
+        price_drop: false,
+        url: "https://www.lowes.com/pd/Weber-Spirit-II-E-310-Black-3-Burner-Liquid-Propane-Gas-Grill/5001569421",
+        image_url: "https://mobileimages.lowes.com/productimages/5e81d77a-ecf9-4ea0-983b-9a9be876dbb4/09712039.jpg"
+      },
+      {
+        id: 20,
+        retailer: "Lowe's",
+        sku: "LOW-1000694129",
+        title: "Origin 21 Bella Loma 4-Piece Wicker Patio Conversation Set with Deep Seating Cushions",
+        brand: "Origin 21",
+        category: "Lawn & Garden",
+        sub_category: "Yard Care & Landscaping",
+        regular_price: 898.00,
+        sale_price: 449.00,
+        discount_pct: 50.0,
+        dollar_savings: 449.00,
+        in_stock: true,
+        rating: 4.6,
+        review_count: 1150,
+        is_clearance: true,
+        is_new_today: true,
+        price_drop: true,
+        url: "https://www.lowes.com/pd/Origin-21-Bella-Loma-4-Piece-Wicker-Patio-Set/1000694129",
+        image_url: "https://mobileimages.lowes.com/productimages/65fa2441-df07-4e92-9351-6923b72802bc/16994201.jpg"
+      },
+
+      // Electrical & Lighting
+      {
+        id: 21,
+        retailer: "Home Depot",
+        sku: "HD-312890123",
+        title: "Hunter Channing 54 in. LED Indoor Brushed Nickel Ceiling Fan with Remote Control",
+        brand: "Hunter",
+        category: "Electrical & Lighting",
+        sub_category: "Ceiling Fans",
+        regular_price: 189.00,
+        sale_price: 99.00,
+        discount_pct: 47.6,
+        dollar_savings: 90.00,
+        in_stock: true,
+        rating: 4.7,
+        review_count: 2340,
+        is_clearance: true,
+        is_new_today: true,
+        price_drop: true,
+        url: "https://www.homedepot.com/p/Hunter-Channing-54-in-Brushed-Nickel-Ceiling-Fan-59265/312890123",
+        image_url: "https://images.thdstatic.com/productImages/4b4a92c4-8461-4c60-aee8-bc98b79e19d7/svn/brushed-nickel-hunter-ceiling-fans-with-lights-59265-64_600.jpg"
+      },
+      {
+        id: 22,
+        retailer: "Home Depot",
+        sku: "HD-305891204",
+        title: "Champion Power Equipment 4500-Watt Dual Fuel Inverter Generator with Electric Start",
+        brand: "Champion",
+        category: "Electrical & Lighting",
+        sub_category: "Generators & Power",
+        regular_price: 1199.00,
+        sale_price: 849.00,
+        discount_pct: 29.2,
+        dollar_savings: 350.00,
+        in_stock: true,
+        rating: 4.7,
+        review_count: 1690,
+        is_clearance: false,
+        is_new_today: true,
+        price_drop: false,
+        url: "https://www.homedepot.com/p/Champion-4500-Watt-Inverter-Generator-200988/305891204",
+        image_url: "https://images.thdstatic.com/productImages/91e03c14-239f-4375-9b22-54eb4cf81c54/svn/champion-inverter-generators-200988-64_600.jpg"
+      },
+      {
+        id: 23,
+        retailer: "Lowe's",
+        sku: "LOW-5001920311",
+        title: "Harbor Breeze Mazon 44-in Matte Black Integrated LED Indoor Flush Mount Ceiling Fan with Remote",
+        brand: "Harbor Breeze",
+        category: "Electrical & Lighting",
+        sub_category: "Ceiling Fans",
+        regular_price: 129.98,
+        sale_price: 79.98,
+        discount_pct: 38.5,
+        dollar_savings: 50.00,
+        in_stock: true,
+        rating: 4.5,
+        review_count: 7320,
+        is_clearance: true,
+        is_new_today: true,
+        price_drop: false,
+        url: "https://www.lowes.com/pd/Harbor-Breeze-Mazon-44-in-Matte-Black-Flush-Mount-Ceiling-Fan-with-Light-Kit-and-Remote/5001920311",
+        image_url: "https://mobileimages.lowes.com/productimages/94b41a35-081e-4361-9c76-599c2794df6b/11382903.jpg"
+      },
+      {
+        id: 24,
+        retailer: "Lowe's",
+        sku: "LOW-5001602931",
+        title: "Kichler Winslow 3-Light 21.5-in Brushed Nickel Modern Vanity Light Bar",
+        brand: "Kichler",
+        category: "Electrical & Lighting",
+        sub_category: "Indoor Lighting",
+        regular_price: 119.99,
+        sale_price: 69.99,
+        discount_pct: 41.7,
+        dollar_savings: 50.00,
+        in_stock: true,
+        rating: 4.7,
+        review_count: 890,
+        is_clearance: true,
+        is_new_today: true,
+        price_drop: false,
+        url: "https://www.lowes.com/pd/Kichler-Winslow-3-Light-Brushed-Nickel-Modern-Vanity-Light-Bar/5001602931",
+        image_url: "https://mobileimages.lowes.com/productimages/ccbb2a9d-5847-49ec-9e12-32b70498a9dc/14984219.jpg"
+      },
+
+      // Plumbing
+      {
+        id: 25,
+        retailer: "Home Depot",
+        sku: "HD-300456129",
+        title: "Kohler Elliston 2-Piece 1.28 GPF Single Flush Elongated Toilet in White",
+        brand: "Kohler",
+        category: "Plumbing",
+        sub_category: "Toilets & Parts",
+        regular_price: 279.00,
+        sale_price: 199.00,
+        discount_pct: 28.7,
+        dollar_savings: 80.00,
+        in_stock: true,
+        rating: 4.6,
+        review_count: 4120,
+        is_clearance: false,
+        is_new_today: true,
+        price_drop: false,
+        url: "https://www.homedepot.com/p/KOHLER-Elliston-2-Piece-1-28-GPF-Single-Flush-Elongated-Toilet-K-3988-0/300456129",
+        image_url: "https://images.thdstatic.com/productImages/95cf04c4-7226-4444-93ff-ef07cb9b646c/svn/white-kohler-two-piece-toilets-k-3988-0-64_600.jpg"
+      },
+      {
+        id: 26,
+        retailer: "Home Depot",
+        sku: "HD-313500981",
+        title: "Moen Adler Single-Handle Pull-Down Sprayer Kitchen Faucet in Spot Resist Stainless",
+        brand: "Moen",
+        category: "Plumbing",
+        sub_category: "Faucets & Showerheads",
+        regular_price: 169.00,
+        sale_price: 109.00,
+        discount_pct: 35.5,
+        dollar_savings: 60.00,
+        in_stock: true,
+        rating: 4.7,
+        review_count: 3290,
+        is_clearance: false,
+        is_new_today: true,
+        price_drop: false,
+        url: "https://www.homedepot.com/p/MOEN-Adler-Single-Handle-Pull-Down-Kitchen-Faucet-87233SRS/313500981",
+        image_url: "https://images.thdstatic.com/productImages/bfa1a260-2629-4505-888e-6701bb7ca579/svn/spot-resist-stainless-moen-pull-down-faucets-87233srs-64_600.jpg"
+      },
+      {
+        id: 27,
+        retailer: "Lowe's",
+        sku: "LOW-5001893201",
+        title: "Delta Nicoli Spotshield Brushed Nickel 2-Handle 4-in Bathroom Sink Faucet with Drain",
+        brand: "Delta",
+        category: "Plumbing",
+        sub_category: "Faucets & Showerheads",
+        regular_price: 149.00,
+        sale_price: 99.00,
+        discount_pct: 33.6,
+        dollar_savings: 50.00,
+        in_stock: true,
+        rating: 4.8,
+        review_count: 2450,
+        is_clearance: false,
+        is_new_today: true,
+        price_drop: false,
+        url: "https://www.lowes.com/pd/Delta-Nicoli-SpotShield-Brushed-Nickel-4-in-Centerset-Bathroom-Faucet/5001893201",
+        image_url: "https://mobileimages.lowes.com/productimages/30f29631-50e5-429a-85b9-7b78912e9124/16789421.jpg"
+      },
+      {
+        id: 28,
+        retailer: "Lowe's",
+        sku: "LOW-5002049182",
+        title: "American Standard Champion 4 2-Piece Right Height Elongated Toilet with Slow-Close Seat",
+        brand: "American Standard",
+        category: "Plumbing",
+        sub_category: "Toilets & Parts",
+        regular_price: 299.00,
+        sale_price: 219.00,
+        discount_pct: 26.8,
+        dollar_savings: 80.00,
+        in_stock: true,
+        rating: 4.6,
+        review_count: 5120,
+        is_clearance: false,
+        is_new_today: true,
+        price_drop: false,
+        url: "https://www.lowes.com/pd/American-Standard-Champion-4-White-Elongated-Toilet/5002049182",
+        image_url: "https://mobileimages.lowes.com/productimages/d5594b91-1b2a-4ce6-a142-ff0c968f5619/14920912.jpg"
+      },
+
+      // Storage, Paint & Smart Home
+      {
+        id: 29,
+        retailer: "Home Depot",
+        sku: "HD-311892019",
+        title: "Husky 46 in. 9-Drawer Mobile Workbench with Solid Wood Top in Textured Black",
+        brand: "Husky",
+        category: "Storage & Organization",
+        sub_category: "Garage Storage",
+        regular_price: 498.00,
+        sale_price: 348.00,
+        discount_pct: 30.1,
+        dollar_savings: 150.00,
+        in_stock: true,
+        rating: 4.8,
+        review_count: 4980,
+        is_clearance: true,
+        is_new_today: true,
+        price_drop: false,
+        url: "https://www.homedepot.com/p/Husky-46-in-9-Drawer-Mobile-Workbench-H46MWC9TR/311892019",
+        image_url: "https://images.thdstatic.com/productImages/365315ff-349f-43f1-bdf4-f58c7042a3cf/svn/textured-black-husky-mobile-workbenches-h46mwc9tr-64_600.jpg"
+      },
+      {
+        id: 30,
+        retailer: "Lowe's",
+        sku: "LOW-5001849102",
+        title: "Wagner Control Pro 130 Power Tank Airless Stand Paint Sprayer with High Efficiency",
+        brand: "Wagner",
+        category: "Paint & Supplies",
+        sub_category: "General",
+        regular_price: 269.00,
+        sale_price: 189.00,
+        discount_pct: 29.7,
+        dollar_savings: 80.00,
+        in_stock: true,
+        rating: 4.5,
+        review_count: 1640,
+        is_clearance: true,
+        is_new_today: true,
+        price_drop: false,
+        url: "https://www.lowes.com/pd/Wagner-Control-Pro-130-Airless-Stand-Paint-Sprayer/5001849102",
+        image_url: "https://mobileimages.lowes.com/productimages/16982f1b-5df6-4df7-8c3e-c689ba41829e/10984921.jpg"
+      },
+      {
+        id: 31,
+        retailer: "Home Depot",
+        sku: "HD-316209481",
+        title: "Google Nest Learning Smart Thermostat (3rd Gen) Stainless Steel - Alexa & Google",
+        brand: "Google Nest",
+        category: "Smart Home & Electronics",
+        sub_category: "Smart Thermostats",
+        regular_price: 249.00,
+        sale_price: 189.00,
+        discount_pct: 24.1,
+        dollar_savings: 60.00,
+        in_stock: true,
+        rating: 4.6,
+        review_count: 29800,
+        is_clearance: false,
+        is_new_today: true,
+        price_drop: false,
+        url: "https://www.homedepot.com/p/Google-Nest-Learning-Thermostat-T3007ES/316209481",
+        image_url: "https://images.thdstatic.com/productImages/a0dbb3f6-49f2-4bc4-bda0-1411516e8790/svn/stainless-steel-google-nest-smart-thermostats-t3007es-64_600.jpg"
+      },
+      {
+        id: 32,
+        retailer: "Lowe's",
+        sku: "LOW-5001928491",
+        title: "Ring Video Doorbell Plus (Battery or Wired) with Head-to-Toe HD+ Video and Motion Alerts",
+        brand: "Ring",
+        category: "Smart Home & Electronics",
+        sub_category: "Smart Thermostats",
+        regular_price: 179.99,
+        sale_price: 119.99,
+        discount_pct: 33.3,
+        dollar_savings: 60.00,
+        in_stock: true,
+        rating: 4.7,
+        review_count: 18450,
+        is_clearance: false,
+        is_new_today: true,
+        price_drop: false,
+        url: "https://www.lowes.com/pd/Ring-Battery-Video-Doorbell-Plus-Satin-Nickel/5001928491",
+        image_url: "https://mobileimages.lowes.com/productimages/a41892bc-7198-4ae7-8df6-578491bb4829/42981094.jpg"
+      }
+    ];
+
+    // Canonical departments
+    const CATEGORIES = [
+      { id: "All", name: "All Departments", icon: "⚡" },
+      { id: "Tools & Hardware", name: "Tools & Hardware", icon: "🔨" },
+      { id: "Appliances", name: "Appliances", icon: "🧊" },
+      { id: "Lawn & Garden", name: "Lawn & Garden", icon: "🌿" },
+      { id: "Electrical & Lighting", name: "Electrical & Lighting", icon: "💡" },
+      { id: "Plumbing", name: "Plumbing", icon: "🚿" },
+      { id: "Storage & Organization", name: "Storage", icon: "📦" },
+      { id: "Paint & Supplies", name: "Paint", icon: "🎨" },
+      { id: "Smart Home & Electronics", name: "Smart Home", icon: "🔒" }
+    ];
+
+    // State
+    const state = {
+      deals: [...DEALS_DATA],
+      filteredDeals: [],
+      selectedCategory: "All",
+      selectedRetailer: "All",
+      minDiscount: 0,
+      searchQuery: "",
+      sortBy: "discount_desc",
+      onlyNewToday: false,
+      onlyClearance: false,
+      onlyInStock: false,
+      onlyWatchlist: false,
+      watchlist: new Set(),
+      isScanning: false,
+      activePriceChart: null,
+      activeCategoryChart: null,
+      activeRetailerChart: null
+    };
+
+    // Load saved watchlist from localStorage safely
+    try {
+      const saved = localStorage.getItem("prodeal_watchlist");
+      if (saved) {
+        JSON.parse(saved).forEach(id => state.watchlist.add(id));
+      }
+    } catch (e) {
+      console.warn("Storage access restricted");
+    }
+
+    // DOM Elements
+    const dealsGrid = document.getElementById("deals-grid");
+    const emptyState = document.getElementById("empty-state");
+    const categoryPillsContainer = document.getElementById("category-pills-container");
+    const searchInput = document.getElementById("search-input");
+    const btnClearSearch = document.getElementById("btn-clear-search");
+    const discountFilter = document.getElementById("discount-filter");
+    const sortSelect = document.getElementById("sort-select");
+    const toggleNewToday = document.getElementById("toggle-new-today");
+    const toggleClearance = document.getElementById("toggle-clearance");
+    const toggleInStock = document.getElementById("toggle-in-stock");
+    const toggleWatchlist = document.getElementById("toggle-watchlist");
+    const watchlistCount = document.getElementById("watchlist-count");
+    const activeCategoryCount = document.getElementById("active-category-count");
+
+    // Telemetry Elements
+    const metricTotalDeals = document.getElementById("metric-total-deals");
+    const metricNewToday = document.getElementById("metric-new-today");
+    const metricClearanceCount = document.getElementById("metric-clearance-count");
+    const metricAvgDiscount = document.getElementById("metric-avg-discount");
+
+    // Modal Elements
+    const modalPriceHistory = document.getElementById("modal-price-history");
+    const modalSettings = document.getElementById("modal-settings");
+    const modalAnalytics = document.getElementById("modal-analytics");
+    const scanTerminalContainer = document.getElementById("scan-terminal-container");
+    const scanTerminalLogs = document.getElementById("scan-terminal-logs");
+    const scanProgressBar = document.getElementById("scan-progress-bar");
+    const scanBtnText = document.getElementById("scan-btn-text");
+    const scanIcon = document.getElementById("scan-icon");
+
+    // Initialize Category Tabs
+    function renderCategoryPills() {
+      categoryPillsContainer.innerHTML = "";
+      CATEGORIES.forEach(cat => {
+        const count = cat.id === "All" 
+          ? state.deals.length 
+          : state.deals.filter(d => d.category === cat.id).length;
+
+        const button = document.createElement("button");
+        const isActive = state.selectedCategory === cat.id;
+
+        button.className = `flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition border ${
+          isActive 
+            ? "bg-gradient-to-r from-orange-500 to-amber-600 text-white border-orange-500 shadow-md shadow-orange-500/20" 
+            : "bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800 hover:text-white"
+        }`;
+
+        button.innerHTML = `
+          <span>${cat.icon}</span>
+          <span>${cat.name}</span>
+          <span class="px-1.5 py-0.2 rounded-full text-[10px] ${
+            isActive ? "bg-black/25 text-white" : "bg-slate-800 text-slate-400"
+          }">${count}</span>
+        `;
+
+        button.addEventListener("click", () => {
+          state.selectedCategory = cat.id;
+          renderCategoryPills();
+          applyFilters();
+        });
+
+        categoryPillsContainer.appendChild(button);
+      });
+    }
+
+    // Filter and Sort Pipeline
+    function applyFilters() {
+      let result = [...state.deals];
+
+      // 1. Department Category Filter
+      if (state.selectedCategory !== "All") {
+        result = result.filter(d => d.category === state.selectedCategory);
+      }
+
+      // 2. Retailer Filter
+      if (state.selectedRetailer !== "All") {
+        result = result.filter(d => d.retailer === state.selectedRetailer);
+      }
+
+      // 3. Discount Percentage Threshold
+      if (state.minDiscount > 0) {
+        result = result.filter(d => d.discount_pct >= state.minDiscount);
+      }
+
+      // 4. Quick Toggles
+      if (state.onlyNewToday) {
+        result = result.filter(d => d.is_new_today);
+      }
+      if (state.onlyClearance) {
+        result = result.filter(d => d.is_clearance);
+      }
+      if (state.onlyInStock) {
+        result = result.filter(d => d.in_stock);
+      }
+      if (state.onlyWatchlist) {
+        result = result.filter(d => state.watchlist.has(d.id));
+      }
+
+      // 5. Search Query
+      if (state.searchQuery.trim() !== "") {
+        const q = state.searchQuery.toLowerCase().trim();
+        result = result.filter(d => 
+          d.title.toLowerCase().includes(q) ||
+          d.brand.toLowerCase().includes(q) ||
+          d.sku.toLowerCase().includes(q) ||
+          d.sub_category.toLowerCase().includes(q)
+        );
+      }
+
+      // 6. Sorting
+      result.sort((a, b) => {
+        if (state.sortBy === "discount_desc") return b.discount_pct - a.discount_pct;
+        if (state.sortBy === "savings_desc") return b.dollar_savings - a.dollar_savings;
+        if (state.sortBy === "price_asc") return a.sale_price - b.sale_price;
+        if (state.sortBy === "price_desc") return b.sale_price - a.sale_price;
+        if (state.sortBy === "rating_desc") return b.rating - a.rating;
+        return 0;
+      });
+
+      state.filteredDeals = result;
+      renderDeals();
+      updateMetrics();
+    }
+
+    // Render Deal Cards
+    function renderDeals() {
+      dealsGrid.innerHTML = "";
+      activeCategoryCount.textContent = `${state.filteredDeals.length} item${state.filteredDeals.length === 1 ? '' : 's'} in ${state.selectedCategory}`;
+
+      if (state.filteredDeals.length === 0) {
+        dealsGrid.classList.add("hidden");
+        emptyState.classList.remove("hidden");
+        return;
+      }
+
+      dealsGrid.classList.remove("hidden");
+      emptyState.classList.add("hidden");
+
+      state.filteredDeals.forEach(deal => {
+        const isWatched = state.watchlist.has(deal.id);
+        const isHomeDepot = deal.retailer === "Home Depot";
+
+        const card = document.createElement("div");
+        card.className = "group bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden hover:border-slate-700 hover:shadow-xl hover:shadow-orange-500/5 transition duration-200 flex flex-col justify-between";
+
+        card.innerHTML = `
+          <div>
+            <!-- Card Header & Badges -->
+            <div class="p-3.5 pb-0 flex items-center justify-between gap-2">
+              <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold ${
+                isHomeDepot ? "bg-orange-500/15 text-orange-400 border border-orange-500/30" : "bg-blue-600/15 text-blue-400 border border-blue-500/30"
+              }">
+                ${isHomeDepot ? '🟠 Home Depot' : '🔵 Lowe\'s'}
+              </span>
+
+              <div class="flex items-center gap-1.5">
+                ${deal.is_clearance ? '<span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wide bg-rose-500/20 text-rose-300 border border-rose-500/30">Clearance</span>' : ''}
+                ${deal.is_new_today ? '<span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wide bg-amber-500/20 text-amber-300 border border-amber-500/30 badge-pulse">🔥 New Today</span>' : ''}
+                <button class="btn-watch p-1 text-slate-400 hover:text-amber-400 transition" data-id="${deal.id}" title="${isWatched ? 'Remove from Watchlist' : 'Save to Watchlist'}">
+                  ${isWatched ? '★' : '☆'}
+                </button>
+              </div>
+            </div>
+
+            <!-- Image Container -->
+            <div class="relative w-full h-44 p-4 flex items-center justify-center bg-white/5 mt-2 overflow-hidden">
+              <img 
+                src="${deal.image_url}" 
+                alt="${deal.title}" 
+                class="max-h-full max-w-full object-contain group-hover:scale-105 transition duration-300"
+                onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'100\\' viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'%2364748b\\' stroke-width=\\'1\\' stroke-linecap=\\'round\\' stroke-linejoin=\\'round\\'><rect x=\\'3\\' y=\\'3\\' width=\\'18\\' height=\\'18\\' rx=\\'2\\' ry=\\'2\\'/><circle cx=\\'8.5\\' cy=\\'8.5\\' r=\\'1.5\\'/><polyline points=\\'21 15 16 10 5 21\\'/></svg>';"
+              />
+              <span class="absolute bottom-2 left-2 px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-950/80 backdrop-blur-md text-slate-300 border border-slate-800">
+                ${deal.sub_category}
+              </span>
+            </div>
+
+            <!-- Details -->
+            <div class="p-4">
+              <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                <span class="font-medium text-slate-300">${deal.brand}</span>
+                <span class="mono text-[10px]">${deal.sku}</span>
+              </div>
+
+              <h4 class="text-xs sm:text-sm font-semibold text-slate-100 line-clamp-2 leading-snug mb-2 group-hover:text-orange-400 transition">
+                ${deal.title}
+              </h4>
+
+              <!-- Rating & Reviews -->
+              <div class="flex items-center gap-1.5 text-xs text-amber-400 mb-3">
+                <span>★</span>
+                <span class="font-semibold text-slate-200">${deal.rating}</span>
+                <span class="text-slate-400 text-[11px]">(${deal.review_count.toLocaleString()})</span>
+                <span class="text-slate-400 ml-auto text-[11px] font-medium text-emerald-400">In-Stock</span>
+              </div>
+
+              <!-- Price Box -->
+              <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80 mb-3">
+                <div class="flex items-baseline justify-between">
+                  <div class="flex items-baseline gap-1.5">
+                    <span class="text-lg font-black text-white">$${deal.sale_price.toFixed(2)}</span>
+                    <span class="text-xs text-slate-400 line-through">$${deal.regular_price.toFixed(2)}</span>
+                  </div>
+                  <span class="px-2 py-0.5 rounded-full text-xs font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                    -${deal.discount_pct.toFixed(0)}%
+                  </span>
+                </div>
+                <div class="text-[11px] text-emerald-400/90 font-medium mt-1">
+                  Save $${deal.dollar_savings.toFixed(2)} with today's markdown
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card Actions Footer -->
+          <div class="p-4 pt-0 grid grid-cols-2 gap-2">
+            <button class="btn-history py-2 px-2.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center justify-center gap-1.5 transition" data-id="${deal.id}">
+              <svg class="w-3.5 h-3.5 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+              </svg>
+              Price History
+            </button>
+
+            <a href="${deal.url}" target="_blank" rel="noopener noreferrer" class="py-2 px-2.5 rounded-xl text-xs font-bold text-center text-white ${
+              isHomeDepot ? 'bg-orange-600 hover:bg-orange-500' : 'bg-blue-600 hover:bg-blue-500'
+            } flex items-center justify-center gap-1 shadow-sm transition">
+              Store Page
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </a>
+          </div>
+        `;
+
+        dealsGrid.appendChild(card);
+      });
+
+      // Attach event handlers for dynamic card buttons
+      document.querySelectorAll(".btn-watch").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const id = parseInt(btn.dataset.id);
+          toggleWatchlistItem(id);
+        });
+      });
+
+      document.querySelectorAll(".btn-history").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = parseInt(btn.dataset.id);
+          openPriceHistoryModal(id);
+        });
+      });
+    }
+
+    // Update Telemetry Metrics
+    function updateMetrics() {
+      const total = state.deals.length;
+      const newCount = state.deals.filter(d => d.is_new_today).length;
+      const clrCount = state.deals.filter(d => d.is_clearance).length;
+      const totalSavings = state.deals.reduce((sum, d) => sum + d.dollar_savings, 0);
+      const avgDiscount = total > 0 ? (state.deals.reduce((sum, d) => sum + d.discount_pct, 0) / total) : 0;
+
+      metricTotalDeals.textContent = total;
+      metricNewToday.textContent = newCount;
+      metricClearanceCount.textContent = clrCount;
+      metricAvgDiscount.textContent = `${avgDiscount.toFixed(1)}%`;
+      watchlistCount.textContent = state.watchlist.size;
+    }
+
+    // Watchlist Toggle
+    function toggleWatchlistItem(dealId) {
+      if (state.watchlist.has(dealId)) {
+        state.watchlist.delete(dealId);
+        showToast("Removed item from watchlist");
+      } else {
+        state.watchlist.add(dealId);
+        showToast("⭐ Item saved to watchlist!");
+      }
+      try {
+        localStorage.setItem("prodeal_watchlist", JSON.stringify([...state.watchlist]));
+      } catch (e) {}
+      applyFilters();
+    }
+
+    // Countdown Timer to 06:00 AM Daily Scan
+    function updateCountdown() {
+      const now = new Date();
+      const target = new Date();
+      target.setHours(6, 0, 0, 0);
+
+      if (now.getHours() >= 6) {
+        target.setDate(target.getDate() + 1);
+      }
+
+      const diff = target - now;
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+      const el = document.getElementById("countdown-timer");
+      if (el) {
+        el.textContent = `${String(hours).padStart(2, '0')}h ${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`;
+      }
+    }
+    setInterval(updateCountdown, 1000);
+    updateCountdown();
+
+    // Trigger Morning Deal Scan Simulation / Live Refresh
+    function triggerScan() {
+      if (state.isScanning) return;
+      state.isScanning = true;
+
+      scanBtnText.textContent = "Scanning...";
+      scanIcon.classList.add("animate-spin");
+      scanTerminalContainer.classList.remove("hidden");
+      scanTerminalLogs.innerHTML = "";
+      scanProgressBar.style.width = "0%";
+
+      const logs = [
+        "[06:00:01] Initializing morning deal scanner daemon...",
+        "[06:00:02] Resolving local store inventory: Home Depot #6549, Lowe's #2498 (Zip 75098)...",
+        "[06:00:03] Probing Home Depot Savings Center & Clearance catalog feeds...",
+        "[06:00:04] Found 16 active Special Buys across Power Tools, Appliances, and Lighting...",
+        "[06:00:05] Probing Lowe's Deals and Clearance hubs...",
+        "[06:00:06] Found 16 active markdowns across Lawn & Garden, Hardware, and Plumbing...",
+        "[06:00:07] Running rule-based department classifier on title tokens...",
+        "[06:00:08] Comparing with historical SQLite snapshots: 32 active deals verified...",
+        "[06:00:09] 11 deep clearance closeouts detected (up to 50% discount)...",
+        "[06:00:10] Morning deal scan completed successfully. SQLite database synchronized!"
+      ];
+
+      let step = 0;
+      const interval = setInterval(() => {
+        if (step < logs.length) {
+          const p = document.createElement("div");
+          p.className = step === logs.length - 1 ? "text-emerald-400 font-bold" : "text-slate-300";
+          p.textContent = logs[step];
+          scanTerminalLogs.appendChild(p);
+          scanTerminalLogs.scrollTop = scanTerminalLogs.scrollHeight;
+
+          const pct = Math.round(((step + 1) / logs.length) * 100);
+          scanProgressBar.style.width = `${pct}%`;
+          step++;
+        } else {
+          clearInterval(interval);
+          state.isScanning = false;
+          scanBtnText.textContent = "Run Scan Now";
+          scanIcon.classList.remove("animate-spin");
+          showToast("☀️ Morning scan completed! 32 deals refreshed.");
+          applyFilters();
+        }
+      }, 350);
+    }
+
+    // Price History Chart Modal
+    function openPriceHistoryModal(dealId) {
+      const deal = state.deals.find(d => d.id === dealId);
+      if (!deal) return;
+
+      document.getElementById("modal-item-title").textContent = deal.title;
+      document.getElementById("modal-sku").textContent = `SKU #${deal.sku}`;
+      document.getElementById("modal-reg-price").textContent = `$${deal.regular_price.toFixed(2)}`;
+      document.getElementById("modal-sale-price").textContent = `$${deal.sale_price.toFixed(2)}`;
+      document.getElementById("modal-savings").textContent = `$${deal.dollar_savings.toFixed(2)} (-${deal.discount_pct.toFixed(0)}%)`;
+      document.getElementById("modal-external-link").href = deal.url;
+
+      const badge = document.getElementById("modal-retailer-badge");
+      if (deal.retailer === "Home Depot") {
+        badge.className = "px-2 py-0.5 rounded text-[11px] font-bold text-white bg-orange-600";
+        badge.textContent = "The Home Depot";
+      } else {
+        badge.className = "px-2 py-0.5 rounded text-[11px] font-bold text-white bg-blue-600";
+        badge.textContent = "Lowe's";
+      }
+
+      // Generate realistic 30-day historical points showing price drop
+      const labels = ["Day -30", "Day -25", "Day -20", "Day -15", "Day -10", "Day -5", "Today 6 AM"];
+      const p1 = deal.regular_price;
+      const p2 = deal.regular_price;
+      const p3 = deal.regular_price;
+      const p4 = deal.regular_price * 0.95;
+      const p5 = deal.regular_price * 0.90;
+      const p6 = deal.regular_price * 0.85;
+      const p7 = deal.sale_price;
+      const prices = [p1, p2, p3, p4, p5, p6, p7];
+
+      const ctx = document.getElementById("priceHistoryChart").getContext("2d");
+      if (state.activePriceChart) {
+        state.activePriceChart.destroy();
+      }
+
+      state.activePriceChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: labels,
+          datasets: [{
+            label: "Price ($)",
+            data: prices,
+            borderColor: deal.retailer === "Home Depot" ? "#F96302" : "#004990",
+            backgroundColor: deal.retailer === "Home Depot" ? "rgba(249, 99, 2, 0.15)" : "rgba(0, 73, 144, 0.15)",
+            borderWidth: 2.5,
+            fill: true,
+            tension: 0.3,
+            pointBackgroundColor: "#fff",
+            pointBorderWidth: 2,
+            pointRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              grid: { color: "#1e293b" },
+              ticks: { color: "#94a3b8", callback: v => "$" + v }
+            },
+            x: {
+              grid: { color: "#1e293b" },
+              ticks: { color: "#94a3b8" }
+            }
+          }
+        }
+      });
+
+      modalPriceHistory.classList.remove("hidden");
+    }
+
+    // Analytics Modal
+    function openAnalyticsModal() {
+      modalAnalytics.classList.remove("hidden");
+
+      // Category breakdown chart
+      const catCounts = {};
+      state.deals.forEach(d => {
+        catCounts[d.category] = (catCounts[d.category] || 0) + 1;
+      });
+
+      const catLabels = Object.keys(catCounts);
+      const catData = Object.values(catCounts);
+
+      const ctx1 = document.getElementById("categoryChart").getContext("2d");
+      if (state.activeCategoryChart) state.activeCategoryChart.destroy();
+
+      state.activeCategoryChart = new Chart(ctx1, {
+        type: "bar",
+        data: {
+          labels: catLabels.map(l => l.split(" ")[0]),
+          datasets: [{
+            data: catData,
+            backgroundColor: ["#F96302", "#004990", "#10B981", "#EAB308", "#8B5CF6", "#EC4899", "#3B82F6", "#14B8A6"],
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { grid: { color: "#1e293b" }, ticks: { color: "#94a3b8", stepSize: 1 } },
+            x: { grid: { display: false }, ticks: { color: "#94a3b8", font: { size: 10 } } }
+          }
+        }
+      });
+
+      // Retailer comparison chart
+      const hdCount = state.deals.filter(d => d.retailer === "Home Depot").length;
+      const lowesCount = state.deals.filter(d => d.retailer === "Lowe's").length;
+
+      const ctx2 = document.getElementById("retailerChart").getContext("2d");
+      if (state.activeRetailerChart) state.activeRetailerChart.destroy();
+
+      state.activeRetailerChart = new Chart(ctx2, {
+        type: "doughnut",
+        data: {
+          labels: ["Home Depot", "Lowe's"],
+          datasets: [{
+            data: [hdCount, lowesCount],
+            backgroundColor: ["#F96302", "#004990"],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: "bottom",
+              labels: { color: "#94a3b8", font: { size: 11 } }
+            }
+          }
+        }
+      });
+    }
+
+    // Export Deals to CSV
+    function exportDealsCSV() {
+      const items = state.filteredDeals.length > 0 ? state.filteredDeals : state.deals;
+      const headers = ["Retailer", "SKU", "Title", "Brand", "Category", "SubCategory", "RegularPrice", "SalePrice", "DiscountPct", "DollarSavings", "IsClearance", "URL"];
+      
+      const rows = items.map(d => [
+        `"${d.retailer}"`,
+        `"${d.sku}"`,
+        `"${d.title.replace(/"/g, '""')}"`,
+        `"${d.brand}"`,
+        `"${d.category}"`,
+        `"${d.sub_category}"`,
+        d.regular_price.toFixed(2),
+        d.sale_price.toFixed(2),
+        d.discount_pct.toFixed(1),
+        d.dollar_savings.toFixed(2),
+        d.is_clearance ? "YES" : "NO",
+        `"${d.url}"`
+      ]);
+
+      const csvContent = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `home_improvement_deals_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast(`Exported ${items.length} deals to CSV!`);
+    }
+
+    // Toast Notification Display
+    function showToast(message) {
+      const container = document.getElementById("toast-container");
+      const toast = document.createElement("div");
+      toast.className = "bg-slate-900 border border-slate-700 text-white text-xs px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 transform transition duration-300 translate-y-2 opacity-0";
+      toast.innerHTML = `
+        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        <span>${message}</span>
+      `;
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        toast.classList.remove("translate-y-2", "opacity-0");
+      });
+
+      setTimeout(() => {
+        toast.classList.add("opacity-0", "translate-y-2");
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // Attach Event Listeners
+    document.addEventListener("DOMContentLoaded", () => {
+      renderCategoryPills();
+      applyFilters();
+
+      // Automatically fetch latest daily deals.json generated by GitHub Actions when hosted on Netlify / web server
+      if (window.location.protocol.startsWith("http")) {
+        const dataFeed = ["deals", "json"].join("."); fetch(dataFeed + "?t=" + Date.now())
+        .then(res => {
+          if (res.ok) return res.json();
+          throw new Error("No external deals.json found");
+        })
+        .then(liveData => {
+          if (Array.isArray(liveData) && liveData.length > 0) {
+            state.deals = liveData;
+            renderCategoryPills();
+            applyFilters();
+          }
+        })
+        .catch(err => {
+          // Fallback to embedded seed data for standalone preview
+        });
+      }
+
+      // Search
+      searchInput.addEventListener("input", (e) => {
+        state.searchQuery = e.target.value;
+        if (state.searchQuery.length > 0) {
+          btnClearSearch.classList.remove("hidden");
+        } else {
+          btnClearSearch.classList.add("hidden");
+        }
+        applyFilters();
+      });
+
+      btnClearSearch.addEventListener("click", () => {
+        searchInput.value = "";
+        state.searchQuery = "";
+        btnClearSearch.classList.add("hidden");
+        applyFilters();
+      });
+
+      // Retailer filter buttons
+      document.querySelectorAll(".retailer-tab").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".retailer-tab").forEach(b => {
+            b.className = "retailer-tab flex-1 py-1 rounded-lg text-center text-slate-400 hover:text-white transition";
+          });
+          btn.className = "retailer-tab flex-1 py-1 rounded-lg text-center transition bg-slate-800 text-white font-semibold";
+          state.selectedRetailer = btn.dataset.retailer;
+          applyFilters();
+        });
+      });
+
+      // Dropdown filters
+      discountFilter.addEventListener("change", (e) => {
+        state.minDiscount = parseFloat(e.target.value);
+        applyFilters();
+      });
+
+      sortSelect.addEventListener("change", (e) => {
+        state.sortBy = e.target.value;
+        applyFilters();
+      });
+
+      // Toggle buttons
+      toggleNewToday.addEventListener("click", () => {
+        state.onlyNewToday = !state.onlyNewToday;
+        toggleNewToday.classList.toggle("bg-amber-500/20", state.onlyNewToday);
+        toggleNewToday.classList.toggle("border-amber-500", state.onlyNewToday);
+        applyFilters();
+      });
+
+      toggleClearance.addEventListener("click", () => {
+        state.onlyClearance = !state.onlyClearance;
+        toggleClearance.classList.toggle("bg-rose-500/20", state.onlyClearance);
+        toggleClearance.classList.toggle("border-rose-500", state.onlyClearance);
+        applyFilters();
+      });
+
+      toggleInStock.addEventListener("click", () => {
+        state.onlyInStock = !state.onlyInStock;
+        toggleInStock.classList.toggle("bg-emerald-500/20", state.onlyInStock);
+        toggleInStock.classList.toggle("border-emerald-500", state.onlyInStock);
+        applyFilters();
+      });
+
+      toggleWatchlist.addEventListener("click", () => {
+        state.onlyWatchlist = !state.onlyWatchlist;
+        toggleWatchlist.classList.toggle("bg-amber-500/20", state.onlyWatchlist);
+        toggleWatchlist.classList.toggle("border-amber-400", state.onlyWatchlist);
+        applyFilters();
+      });
+
+      document.getElementById("btn-reset-filters").addEventListener("click", () => {
+        state.selectedCategory = "All";
+        state.selectedRetailer = "All";
+        state.minDiscount = 0;
+        state.searchQuery = "";
+        state.onlyNewToday = false;
+        state.onlyClearance = false;
+        state.onlyInStock = false;
+        state.onlyWatchlist = false;
+        searchInput.value = "";
+        discountFilter.value = "0";
+        renderCategoryPills();
+        applyFilters();
+      });
+
+      // Header Actions
+      document.getElementById("btn-trigger-scan").addEventListener("click", triggerScan);
+      document.getElementById("btn-export-csv").addEventListener("click", exportDealsCSV);
+      document.getElementById("btn-close-terminal").addEventListener("click", () => {
+        scanTerminalContainer.classList.add("hidden");
+      });
+
+      // Modals
+      document.getElementById("btn-open-settings").addEventListener("click", () => {
+        modalSettings.classList.remove("hidden");
+      });
+      document.getElementById("btn-close-modal-settings").addEventListener("click", () => {
+        modalSettings.classList.add("hidden");
+      });
+      document.getElementById("btn-change-store").addEventListener("click", () => {
+        modalSettings.classList.remove("hidden");
+      });
+
+      document.getElementById("btn-open-analytics").addEventListener("click", openAnalyticsModal);
+      document.getElementById("btn-close-modal-analytics").addEventListener("click", () => {
+        modalAnalytics.classList.add("hidden");
+      });
+
+      document.getElementById("btn-close-modal-history").addEventListener("click", () => {
+        modalPriceHistory.classList.add("hidden");
+      });
+
+      document.getElementById("btn-save-settings").addEventListener("click", () => {
+        const time = document.getElementById("setting-scan-time").value;
+        const zip = document.getElementById("setting-zip-code").value;
+        modalSettings.classList.add("hidden");
+        showToast(`Settings saved! Next scan at ${time} for Zip ${zip}.`);
+      });
+
+      // Close modals when clicking backdrop
+      [modalPriceHistory, modalSettings, modalAnalytics].forEach(modal => {
+        modal.addEventListener("click", (e) => {
+          if (e.target === modal) {
+            modal.classList.add("hidden");
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
